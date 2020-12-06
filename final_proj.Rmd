@@ -1,6 +1,6 @@
 ---
-title: "Final project starter script"
-author: "Prof. Chouldechova"
+title: "NLSY97 Analysis (Sex Based)"
+author: "Anum Malik, Rishabh Jain, Javier Rico Aristizabal"
 date: ''
 output: html_document
 ---
