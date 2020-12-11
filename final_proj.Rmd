@@ -1,6 +1,6 @@
 ---
 title: "Final project starter script"
-author: "Prof. Chouldechova"
+author: "Anum Malik, Javier Rico, Rishabh Jain"
 date: ''
 output: html_document
 ---
