@@ -317,15 +317,77 @@ With the histogram, we see that the number of respondents for the lower income r
 income.industries <- nlsy.recode %>%
   group_by(Sex, Industry_Code_2017) %>%
   summarize(median.income = median(Income, na.rm = TRUE))
-nlsy.recode['Industry_2017'] <- NA
-nlsy.recode$Industry_Code_2017
+#nlsy.recode['Industry_2017'] <- 'NA'
+#class(nlsy.recode$Industry_2017)
+
+industry.decoder <- c(rep(' AGRICULTURE, FORESTRY AND FISHERIES',121),rep('NA',79),
+                    rep(' MINING',121),rep('NA',79),rep(' UTILITIES',121),
+                    rep('NA',79),rep('CONSTRUCTION',1),rep('NA',299),
+                    rep(' MANUFACTURING',2921),rep('NA',79),rep(' WHOLESALE TRADE',521),
+                    rep('NA',79),rep(' RETAIL TRADE',1121),rep('NA',99),
+                    rep(' ARTS, ENTERTAINMENT AND RECREATION SERVICES',1),
+                    rep('NA',179),rep(' TRANSPORTATION AND WAREHOUSING',321),
+                    rep('NA',79),rep(' INFORMATION AND COMMUNICATION',311),
+                    rep('NA',89),rep(' FINANCE, INSURANCE, AND REAL ESTATE',321),
+                    rep('NA',79),rep(' PROFESSIONAL AND RELATED SERVICES',521),
+                    rep('NA',69),rep(' EDUCATIONAL, HEALTH, AND SOCIAL SERVICES',611),
+                    rep('NA',89),rep(' ENTERTAINMENT, ACCOMODATIONS, AND FOOD SERVICES',131),
+                    rep('NA',79),rep(' OTHER SERVICES',521),rep('NA',79),
+                    rep(' PUBLIC ADMINISTRATION',221),rep('NA',79),
+                    rep(' ACTIVE DUTY MILITARY',221),rep('NA',59),rep(' ACS SPECIAL CODES',41))
+names(industry.decoder)<-170:9990
+nlsy.recode$Industry_Code_2017 <- sapply(nlsy.recode$Industry_Code_2017, function(x) ifelse(x <= 9990, industry.decoder[as.character(x)], 'NA'))
+
+nlsy.recode <- nlsy.recode %>%
+  mutate(nlsy.recode, 
+         Industry_Code_2017 = ifelse(is.na(Industry_Code_2017), "Other", Industry_Code_2017))
+nlsy.recode
+```
+
+```{r}
+
+```
+
+
+industry.decoder <- c(rep(' AGRICULTURE, FORESTRY AND FISHERIES',121),rep('NA',79),
+                    rep(' MINING',121),rep('NA',79),rep(' UTILITIES',121),
+                    rep('NA',79),rep('CONSTRUCTION',1),rep('NA',299),
+                    rep(' MANUFACTURING',2921),rep('NA',79),rep(' WHOLESALE TRADE',521),
+                    rep('NA',79),rep(' RETAIL TRADE',1121),rep('NA',99),
+                    rep(' ARTS, ENTERTAINMENT AND RECREATION SERVICES',1),
+                    rep('NA',179),rep(' TRANSPORTATION AND WAREHOUSING',321),
+                    rep('NA',79),rep(' INFORMATION AND COMMUNICATION',311),
+                    rep('NA',89),rep(' FINANCE, INSURANCE, AND REAL ESTATE',321),
+                    rep('NA',79),rep(' PROFESSIONAL AND RELATED SERVICES',521),
+                    rep('NA',69),rep(' EDUCATIONAL, HEALTH, AND SOCIAL SERVICES',611),
+                    rep('NA',89),rep(' ENTERTAINMENT, ACCOMODATIONS, AND FOOD SERVICES',131),
+                    rep('NA',79),rep(' OTHER SERVICES',521),rep('NA',79),
+                    rep(' PUBLIC ADMINISTRATION',221),rep('NA',79),
+                    rep(' ACTIVE DUTY MILITARY',221),rep('NA',59),rep(' ACS SPECIAL CODES',41))
+names(industry.decoder)<-170:9990
+sapply(nlsy.recode$Industry_2017, function(x) ifelse(x <= 9990, industry.decoder[as.character(x)], 'NA'))
+class(nlsy.recode$Industry_2017)
+
+
+
+
+
+nlsy.recode <- nlsy.recode %>%
+  mutate(nlsy.recode, 
+         Industry_2017 = ifelse(Industry_Code_2017 >= 170 & Industry_Code_2017 <= 290, "AGRICULTURE, FORESTRY AND FISHERIES","O"))
+nlsy.recode$Industry_2017
+
+
+
+
+
 nlsy.recode <- nlsy.recode %>%
   mutate(nlsy.recode, 
          Industry_2017 = ifelse(Industry_Code_2017 >= 170 & Industry_Code_2017 <= 290, "AGRICULTURE, FORESTRY AND FISHERIES", "Other"))
 nlsy.recode$Industry_2017
 
 
-if(Industry_Code_2017 >= 170 & Industry_Code_2017 <= 290) {
+if(nlsy.recode$Industry_Code_2017 >= 170 & nlsy.recode$Industry_Code_2017 <= 290) {
   nlsy.recode$Industry_2017 = "AGRICULTURE, FORESTRY AND FISHERIES"
   }
 
