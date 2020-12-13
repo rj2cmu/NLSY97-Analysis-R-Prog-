@@ -426,6 +426,9 @@ summary(income.lm)
 income.lm.sex <- lm(Income ~ Sex, data = nlsy.recode)
 summary(income.lm)
 ```
+```{r}
+anova(update(income.lm.grade.ind.sex, . ~ . - Sex), income.lm.grade.ind.sex)
+```
 
 #No. of Biological Children at home
 
