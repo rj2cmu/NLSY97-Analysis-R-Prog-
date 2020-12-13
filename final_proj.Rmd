@@ -39,10 +39,10 @@ colnames(nlsy) <- c("PSTRAN_GPA.01_PSTR",
     "YSAQ-010_1997",
     "Marijuana_1997", #YSAQ-369_1997
     "YEXP-300_1997",
-    "%Ch.Dip.20_1997", #YEXP-1500_1997
+    "PerCh.Dip.20_1997", #YEXP-1500_1997
     "YEXP-1600_1997",
-    "%Ch.Baby_1997", #YEXP-1800_1997
-    "%Ch.Coll.Degree.30_1997", #YEXP-2000_1997
+    "PerCh.Baby_1997", #YEXP-1800_1997
+    "PerCh.Coll.Degree.30_1997", #YEXP-2000_1997
     "Sex",
     "BDATE_M_1997", #KEY_BDATE_M_1997
     "BDATE_Y_1997", #KEY_BDATE_Y_1997
@@ -202,85 +202,11 @@ n.topcoded
 
 `r n.topcoded` of the incomes are topcoded to the maximum value of `r max(nlsy$income, na.rm = TRUE)`, which is the average value of the top `r n.topcoded` earners. You will want to think about how  to deal with this in your analysis.
 
-
-The following data `CV_BIO_MOM_AGE_CHILD1_1997` presents the age of biological mother at first birth, differenciating by sex.
-```{r}
-nlsy <- nlsy %>%
-  mutate(Sex = recode_factor(Sex,
-                             `1` = "Men",
-                             `2` = "Female",
-                             `0` = "No Information"))
-mom.age.sex <- nlsy %>%
-  select(Sex, CV_BIO_MOM_AGE_CHILD1_1997)
-qplot(data = mom.age.sex,
-      geom = "boxplot",
-      x = Sex,
-      y = CV_BIO_MOM_AGE_CHILD1_1997,
-      fill = Sex)
-```
 <font color="#157515">
-The data presents ages that should be evaluated for biological mothers below 10 years old, and above 60 years old.
+We begin our analysis by including only the variables we have shortlisted into a data-set for consistency. The trends that seem most interesting to us for further exploration in assessing what impacts income gap between genders are: Marital Status (`MaritalStatus_2017`), Highest Grade Completed, Industry, Number of Biological Children, House-hold Net Worth at 30 and a digression towards Marijuana Use. Furthermore, we would like to see whether there is an impact of physical appearance on the income gap by using Body Mass Index (BMI). 
 </font>
 
-The following creates a dataFrame and deletes those rows where biological age of mothers is less than 12 years old.
 
-```{r}
-mom.age.sex <- data.frame(mom.age.sex)
-mom.age.sex <- mom.age.sex[!(mom.age.sex$CV_BIO_MOM_AGE_CHILD1_1997<12),]
-qplot(data = mom.age.sex,
-      geom = "boxplot",
-      x = Sex,
-      y = CV_BIO_MOM_AGE_CHILD1_1997,
-      fill = Sex)
-```
-
-```{r}
-res.mother.highest.grade <- nlsy %>%
-  select(Sex, Highest.Grade_RES_MOM_1997)
-resident.mother.highest.grade <- res.mother.highest.grade %>%
-  mutate(Highest.Grade_RES_MOM_1997 = recode_factor(Highest.Grade_RES_MOM_1997,
-                                             `0` = "NONE",
-                                             `1` = "1ST GRADE",
-                                             `2` = "2ND GRADE",
-                                             `3` = "3RD GRADE",
-                                             `4` = "4TH GRADE",
-                                             `5` = "5TH GRADE",
-                                             `6` = "6TH GRADE",
-                                             `7` = "7TH GRADE",
-                                             `8` = "8TH GRADE",
-                                             `9` = "9TH GRADE",
-                                             `10` = "10TH GRADE",
-                                             `11` = "11TH GRADE",
-                                             `12` = "12TH GRADE",
-                                             `95` = "UNGRADED",
-                                             `13` = "1ST YEAR COLLEGE",
-                                             `14` = "2ND YEAR COLLEGE",
-                                             `15` = "3RD YEAR COLLEGE",
-                                             `16` = "4TH YEAR COLLEGE",
-                                             `17` = "4TH YEAR COLLEGE",
-                                             `18` = "4TH YEAR COLLEGE",
-                                             `19` = "4TH YEAR COLLEGE",
-                                             `20` = "4TH YEAR COLLEGE OR MORE"))
-
-mother.highest.grade <- resident.mother.highest.grade %>%
-  group_by(Sex, Highest.Grade_RES_MOM_1997) %>%
-  summarize(n = n())
-mother.highest.grade <- as_tibble(mother.highest.grade)
-plot.mom.grade <- ggplot(data = mother.highest.grade,
-                         aes(x = Highest.Grade_RES_MOM_1997,
-                             y = n,
-                             fill = n))
-plot.mom.grade + geom_bar(stat = "identity") + 
-  guides(fill = guide_legend(title = "Individuals in each bin")) +
-  facet_grid(.~ Sex) +
-  theme(axis.text.x=element_text(angle = 90, vjust = 0.5))
-
-
-
-
-
-
-```
 
 ```{r}
 nlsy.recode <- nlsy %>%
@@ -288,14 +214,14 @@ nlsy.recode <- nlsy %>%
                                 `1` = "Men",
                                 `2` = "Female",
                                 `0` = "No Information"))
-nlsy.recode <- select(nlsy.recode, Marijuana_1997, "%Ch.Dip.20_1997", "%Ch.Baby_1997", "%Ch.Coll.Degree.30_1997", Sex, BDATE_M_1997, BDATE_Y_1997, Dep_F_1997, Dep_M_1997, HH_NET_WORTH_P_1997, 
+nlsy.recode <- select(nlsy.recode, Marijuana_1997, PerCh.Dip.20_1997, PerCh.Baby_1997, PerCh.Coll.Degree.30_1997, Sex, BDATE_M_1997, BDATE_Y_1997, Dep_F_1997, Dep_M_1997, HH_NET_WORTH_P_1997, 
  Highest.Grade_RES_DAD_1997,Highest.Grade_RES_MOM_1997,Ever_Used_Coca_1998, Disorganized_2002,
  HH_NET_WORTH_Y_2003,
  Marijuana_2005, 
   Children_HH_2007,
   Children_HH_2009, 
   Family_Income_2011, 
-  "Highest_Degree_Prior_2011.12",
+  Highest_Degree_Prior_2011.12,
   Children_HH_2011, 
   Highest_Grade_Completed_2011,
   Height.Inch_2011,
@@ -315,19 +241,30 @@ nlsy.recode <- select(nlsy.recode, Marijuana_1997, "%Ch.Dip.20_1997", "%Ch.Baby_
   ASSETS_FINANCIAL,
   ASSETS_DEBTS_30
  )
+```
 
-nlsy.recode <- filter(nlsy.recode, !is.na(Income), !is.na(MaritalStatus_2017))
-  
+<font color="#157515">
+As we are going to be analyzing income across all our variables, we will be removing NAN values from the rows within that variable. 
+</font>
+
+```{r}
+nlsy.recode <- filter(nlsy.recode, !is.na(Income)) # 
+```  
+
+<font color="#157515">
+Let's assess a summary table of income across gender. 
+</font>
+
+```{r}
 income.gender <- nlsy.recode %>%
   group_by(Sex) %>%
-  summarize(average.income = mean(Income, na.rm = TRUE), 
-            median.income = median(Income, na.rm = TRUE))
-
+  summarize(average.income = mean(Income), 
+            median.income = median(Income))
+respondents <- table(nlsy.recode$Sex)
 kable(income.gender, format = "markdown", digits = 3)
-
 ```
 <font color="#157515">
-When assessing the data via a preliminary scan, we see that the average income for men is `r income.gender$average.income[1]` and the average income for women is `r income.gender$average.income[2]`, which is amounts to a difference of `r income.gender$average.income[1] - income.gender$average.income[2]`.
+When assessing the data via a preliminary scan, we see that the average income for men is `r income.gender$average.income[1]` and the average income for women is `r income.gender$average.income[2]`, which amounts to a difference of `r income.gender$average.income[1] - income.gender$average.income[2]`.
 
 </font>
 
@@ -337,8 +274,85 @@ ggplot(nlsy.recode, aes(Income, fill = Sex)) + geom_histogram(alpha = 0.5, posit
 ```
 
 <font color="#157515">
-With the histogram, we see that the number of respondents for the lower income ranges are higher for women compared to men whereas as the income progresses on the x-axis; we see men take the lead. Furthermore, we can assess that the data-set is left-skewed, which is why for the purpose of our analysis we will use the median income. 
+After removing the NAN values in income. the number of female respondents is (`r respondents[2]`) compared to men (`r respondents[1]`). With the histogram, we see as the income progresses on the x-axis; men take the lead in reporting; whereas, in the lower range, women seem to be the higher number of respondents. Furthermore, we can assess that the data-set is left-skewed. It is important to note that it seems like the data is left-skewed. Let's move on to assess income gaps and gender with other variables. First up, is Marital Status.
 
+<b>Income, Sex, and Marital Status<b>:
+Would you expect a single man to earn more than a single woman? Or could a divorced man earn more than a divorced woman? Our expectation would be that marital status should not affect income depending on gender. Let's find out.
+</font>
+
+```{r}
+nlsy.recode <- filter(nlsy.recode, !is.na(MaritalStatus_2017)) #removing NAN values or no responses from our analysis variable. 
+
+nlsy.recode <-mutate(nlsy.recode, MaritalStatus_2017 = recode_factor(MaritalStatus_2017,
+                                `0` = "Never-married",
+                                `1` = "Married",
+                                `2` = "Separated",
+                                `3` = "Divorced",
+                                `4` = "Widowed",
+                                `NA` = "Other"))
+
+income.gender.2<- nlsy.recode %>%
+  group_by(Sex, MaritalStatus_2017) %>%
+  summarize(average.income = mean(Income))
+
+income.gender.2
+```
+
+<font color="#157515">
+The simple summary showcases that the variable is worth exploring. In most instances across marital groups, the average income of men is higher than women. By running a t-test we can get more concrete information. 
+</font>
+
+```{r}
+
+income.gap.marital <- nlsy.recode %>%
+  group_by(MaritalStatus_2017) %>%
+  summarize(Income.gap = mean(Income[Sex == "Men"]) -  mean(Income[Sex == "Female"]),
+            lower = (t.test(x = Income[Sex == "Men"], y = Income[Sex == "Female"]))$conf.int[1],
+            upper = (t.test(x = Income[Sex == "Men"], y = Income[Sex == "Female"]))$conf.int[2],
+            is.significant = as.numeric(t.test(Income ~ Sex)$p.value < 0.05), .groups = "keep")
+
+income.gap.marital
+```
+
+<font color="#157515">
+The income.gap variable shows us the difference between average salaries of men and women in the specified marital groups. 
+</font>
+
+```{r}
+marital.gap <- ggplot(data = income.gap.marital,aes(x = MaritalStatus_2017, y = Income.gap, fill = is.significant))
+marital.gap + geom_bar(position="dodge", stat="identity") + guides(fill = guide_legend(title = "Statistically Significant")) + geom_errorbar(aes(ymin = lower, ymax = upper), width=.2, position = position_dodge(0.9)) +  theme(axis.text.x=element_text(angle = 0, vjust = 0.5)) + labs(x = "Marital Status", y = "Income Gap Between Genders")
+```
+<font color="#157515">
+The error bars are below the 0-axis, therefore according to the data the results are not statistically significant. Running a regression model should corroborate our initial findings. First, we will run a simple regression on just income and sex; following which we will include marital status in the model
+</font>
+
+```{r}
+lm.income.sex <- lm(Income ~ Sex, data = nlsy.recode)
+summary(lm.income.sex)
+```
+<font color="#157515">
+From the simple regression, it seems that on average women earn `r round(coef(lm.income.sex)["SexFemale"], 0)*-1` less than men. This seems to be statistically significant with a p-value of `r lm.income.sex$p.value`
+</font>
+
+```{r}
+lm.income.sex.marital <- lm(Income ~ Sex + MaritalStatus_2017, data = nlsy.recode)
+summary(lm.income.sex.marital)
+```
+
+```{r}
+anova(lm.income.sex , lm.income.sex.marital)
+```
+
+<font color="#157515">
+From the anova, we see that including marital status to gender has an impact on the income gap and it is significant.   
+</font>
+
+```{r}
+lm.marital.interact <- update(lm.income.sex.marital, .~. + MaritalStatus_2017 * Sex)
+summary(lm.marital.interact)
+```
+<font color="#157515">
+This interactive model corresponds to differences in earnings across gender and marital status that are not accounted for by a model that assumes independent effects for Marital status and gender. For instance, here we only see that the income difference among married men and married women is $16396 less than the difference between single men and single women. However, we cannot conclude that marital status as a whole is a factor that is highly associated with the income gap between men and women.
 </font>
 
 ```{r}
@@ -379,45 +393,13 @@ income.industries
 
 ```
 
-```{r}
-nlsy.recode <-mutate(nlsy.recode, MaritalStatus_2017 = recode_factor(MaritalStatus_2017,
-                                `0` = "Never-married",
-                                `1` = "Married",
-                                `2` = "Separated",
-                                `3` = "Divorced",
-                                `4` = "Widowed",
-                                `NA` = "Other"))
 
-income.gender.2<- nlsy.recode %>%
-  group_by(Sex, MaritalStatus_2017) %>%
-  summarize(average.income = mean(Income, na.rm = TRUE))
-
-income.gender.2
-```
 
 ```{r, fig.height = 4, fig.width = 8}
 ggplot(data = income.gender.2, aes(x = MaritalStatus_2017, y = average.income, fill = Sex)) + 
   geom_bar(stat = "identity") + facet_grid(.~Sex) + coord_flip() + 
   theme(axis.text.x=element_text(angle =- 90, vjust = 0.5), legend.position = "none") + 
   labs( x = "Marital Status", y = "Average Income" )
-```
-```{r}
-lm.income.sex.marital <- lm(Income ~ Sex + MaritalStatus_2017,
-                            data = nlsy.recode)
-summary(lm.income.sex.marital)
-
-lm.income.sex <- lm(Income ~ Sex, data = nlsy.recode)
-```
-
-#anova test for comparing income + marital status & income + sex + marital status
-
-```{r}
-anova(lm.income.sex , lm.income.sex.marital)
-```
-
-```{r}
-lm.marital.interact <- update(lm.income.sex.marital, .~. + MaritalStatus_2017 * Sex)
-summary(lm.marital.interact)
 ```
 ```{r}
 ggplot(data = nlsy.recode, aes(x = Highest_Grade_Completed_2011, y = Income , colour = Sex )) + geom_point() + stat_smooth(method = 'loess', formula = y ~ x, size = 1) + theme(axis.text.x=element_text(angle = 0, vjust = 0.5)) + xlim(0,22) + 
@@ -587,4 +569,49 @@ num.bio.child <- nlsy.recode %>%
                             y = Income[Sex == "Female"])$conf.int[1],
             upper = t.test(x = Income[Sex == "Men"],
                             y = Income[Sex == "Female"])$conf.int[2], .groups = "keep")
+```
+
+```{r}
+education.indicator <- filter(nlsy.recode, !(nlsy.education$Highest_Grade_Completed_2011 == "NONE"),
+                              !(nlsy.education$Highest_Grade_Completed_2011 == "1ST GRADE"),
+                              !(nlsy.education$Highest_Grade_Completed_2011 == "2ND GRADE"),
+                              !(nlsy.education$Highest_Grade_Completed_2011 == "3RD GRADE"),
+                              !(nlsy.education$Highest_Grade_Completed_2011 == "4TH GRADE"),
+                              !(nlsy.education$Highest_Grade_Completed_2011 == "5TH GRADE"),
+                              !(nlsy.education$Highest_Grade_Completed_2011 == "6TH GRADE"),
+                              !(nlsy.education$Highest_Grade_Completed_2011 == "7TH GRADE"),
+                              !(nlsy.education$Highest_Grade_Completed_2011 == "UNGRADED"),
+                              !is.na(nlsy.education$Highest_Grade_Completed_2011),
+                              !is.na(nlsy.education$Income))
+ed.indicator <- education.indicator %>%
+  group_by(Highest_Grade_Completed_2011) %>%
+  summarize(mean = mean(Income),
+            lower = t.test(Income)$conf.int[1],
+            upper = t.test(Income)$conf.int[2],
+            is.signif = as_factor(
+              if (lower<0 & upper>0){
+                is.signif = 0
+              } else {
+                is.signif = 1
+              }
+              ), .groups = 'keep')
+
+```
+
+
+```{r}
+education.indicator <- mutate(ed.indicator,
+                     Highest_Grade_Completed_2011 = factor(Highest_Grade_Completed_2011,
+                     levels = c("8TH GRADE", "9TH GRADE", "10TH GRADE",
+                     "11TH GRADE", "12TH GRADE", "1ST YEAR COLLEGE", "2ND YEAR COLLEGE",
+                     "3RD YEAR COLLEGE", "4TH YEAR COLLEGE", "5TH YEAR COLLEGE", "6TH YEAR COLLEGE",
+                     "7TH YEAR COLLEGE", "8TH YEAR COLLEGE OR MORE")))
+nlsy.education.plot <- ggplot(data = ed.indicator,
+                              aes(x = Highest_Grade_Completed_2011, y = mean,
+                                  fill = is.signif))
+nlsy.education.plot + geom_bar(position="dodge", stat="identity") +
+  guides(fill = guide_legend(title = "Statistically Significant")) +
+  geom_errorbar(aes(ymin = lower, ymax = upper), 
+                width=.2, position = position_dodge(0.9)) +
+  theme(axis.text.x=element_text(angle = 90, vjust = 0.5))
 ```
