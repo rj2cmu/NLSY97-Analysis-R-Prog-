@@ -400,12 +400,62 @@ ggplot(data = income.gender.2, aes(x = MaritalStatus_2017, y = average.income, f
   theme(axis.text.x=element_text(angle =- 90, vjust = 0.5), legend.position = "none") + 
   labs( x = "Marital Status", y = "Average Income" )
 ```
-```{r ,fig.height = 7, fig.width = 8}
-ggplot(data = income.industries, aes(x = Industry_Code_2017, y = average.income, colour = Sex )) + geom_point() + stat_smooth(method = 'loess', formula = y ~ x, size = 1) + theme(axis.text.x=element_text(angle =- 90, vjust = 0.5)) + ylab("Average Income")
+```{r ,fig.height = 4, fig.width = 8}
+ggplot(data = income.industries, aes(x = Industry_Code_2017, y = average.income, colour = Sex )) + 
+  geom_point() + stat_smooth(method = 'lm', size = 1, fullrange = TRUE) + 
+  theme(axis.text.x=element_text(angle =- 90, vjust = 0.5)) + ylab("Average Income")
+```
+```{r, fig.height = 4, fig.width = 8}
+ggplot(data = nlsy.recode, aes(x = Income, y = Highest_Grade_Completed_2011 , colour = Industry_Code_2017 )) + geom_point() + stat_smooth(method = 'loess', formula = y ~ x, size = 1) + theme(axis.text.x=element_text(angle =- 90, vjust = 0.5)) + ylim(0,22)
 ```
 ```{r}
-
-
-ggplot(data = nlsy.recode, aes(x = Income, y = Highest_Grade_Completed_2011 , colour = Industry_Code_2017 )) + geom_point() + stat_smooth(method = 'loess', formula = y ~ x, size = 1) + theme(axis.text.x=element_text(angle =- 90, vjust = 0.5))
+income.lm.grade.ind.sex <- lm(Income ~ Highest_Grade_Completed_2011 + Industry_Code_2017 + Sex, data = nlsy.recode)
+summary(income.lm)
+```
+```{r}
+confint(income.lm.grade.ind.sex, parm = "Industry_Code_2017")
+confint(income.lm.grade.ind.sex, parm = "Highest_Grade_Completed_2011")
+confint(income.lm.grade.ind.sex, parm = "Sex")
+```
+```{r}
+income.lm.grade.sex <- lm(Income ~ Highest_Grade_Completed_2011 + Sex, data = nlsy.recode)
+summary(income.lm)
 ```
 
+```{r}
+income.lm.sex <- lm(Income ~ Sex, data = nlsy.recode)
+summary(income.lm)
+```
+
+#No. of Biological Children at home
+
+```{r}
+num.bio.child <- nlsy.recode %>%
+  group_by(Children_HH_2009) %>%
+  summarize(average.income = mean(Income, na.rm = TRUE))
+num.bio.child
+```
+
+```{r, fig.height = 4, fig.width = 9}
+ggplot(data = num.bio.child, aes(x = Children_HH_2009, y = average.income, fill = average.income)) + 
+  geom_bar(position="dodge", stat="identity") + 
+  theme(axis.text.x=element_text(angle = 0, vjust = 0.5), legend.position = "none") + 
+  labs( x = "Number of Biological Children", y = "Average Income ($)")
+```
+
+
+```{r}
+num.bio.child <- nlsy.recode %>%
+  group_by(Children_HH_2009, na.rm = TRUE) %>%
+  summarize(mean = mean(Income, na.rm = TRUE),
+            lower = t.test(Income, na.rm = TRUE)$conf.int[1],
+            upper = t.test(Income, na.rm = TRUE)$conf.int[2],
+            is.signif = as_factor(
+              if (lower<0 & upper>0){
+                is.signif = 0
+              } else {
+                is.signif = 1
+              }
+            ), .groups = 'keep')
+num.bio.child
+```
