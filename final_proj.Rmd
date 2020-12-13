@@ -316,7 +316,7 @@ nlsy.recode <- select(nlsy.recode, Marijuana_1997, "%Ch.Dip.20_1997", "%Ch.Baby_
   ASSETS_DEBTS_30
  )
 
-nlsy.recode <- filter(nlsy.recode, !is.na(Income))
+nlsy.recode <- filter(nlsy.recode, !is.na(Income), !is.na(MaritalStatus_2017))
   
 income.gender <- nlsy.recode %>%
   group_by(Sex) %>%
@@ -380,8 +380,7 @@ income.industries
 ```
 
 ```{r}
-nlsy.recode <- nlsy.recode %>%
-  mutate(MaritalStatus_2017 = recode_factor(MaritalStatus_2017,
+nlsy.recode <-mutate(nlsy.recode, MaritalStatus_2017 = recode_factor(MaritalStatus_2017,
                                 `0` = "Never-married",
                                 `1` = "Married",
                                 `2` = "Separated",
@@ -402,6 +401,94 @@ ggplot(data = income.gender.2, aes(x = MaritalStatus_2017, y = average.income, f
   theme(axis.text.x=element_text(angle =- 90, vjust = 0.5), legend.position = "none") + 
   labs( x = "Marital Status", y = "Average Income" )
 ```
+```{r}
+lm.income.sex.marital <- lm(Income ~ Sex + MaritalStatus_2017,
+                            data = nlsy.recode)
+summary(lm.income.sex.marital)
+
+lm.income.sex <- lm(Income ~ Sex, data = nlsy.recode)
+```
+
+#anova test for comparing income + marital status & income + sex + marital status
+
+```{r}
+anova(lm.income.sex , lm.income.sex.marital)
+```
+
+```{r}
+lm.marital.interact <- update(lm.income.sex.marital, .~. + MaritalStatus_2017 * Sex)
+summary(lm.marital.interact)
+```
+```{r}
+ggplot(data = nlsy.recode, aes(x = Highest_Grade_Completed_2011, y = Income , colour = Sex )) + geom_point() + stat_smooth(method = 'loess', formula = y ~ x, size = 1) + theme(axis.text.x=element_text(angle = 0, vjust = 0.5)) + xlim(0,22) + 
+  labs( x = "Highest Degree Completed", y = "Average Income ($)")
+```
+<font color="#157515">
+In the graph we can see an evolution of the income gap between men and women, depending on the highest degree completed (not using the grades as a discrete factor variable here). We don't consider in the graph the data related to non-completed undergrad studies. 
+It evidences that for those who are close to 12 years of completed studies, equivalent to high school completion, the income is lower in average to those who didn't completed high school studies, and to those who have higher degree levels. It also shows that the income gap is in average lower between those who are close to 12 years of studies.
+</font>
+
+
+```{r}
+nlsy.recode <- nlsy.recode %>%
+  mutate(Marijuana_1997 = recode_factor(Marijuana_1997,
+                                             `0` = "No",
+                                             `1` = "Yes"))
+
+ggplot(data = nlsy.recode, aes(x = Highest_Grade_Completed_2011, y = Income , colour = Marijuana_1997,shape = Sex)) + geom_point() + stat_smooth(method = 'loess', formula = y ~ x, size = 1) + theme(axis.text.x=element_text(angle = 0, vjust = 0.5)) + xlim(0,22) + 
+  labs( x = "Highest Degree Completed", y = "Average Income ($)")
+```
+
+
+<font color="#157515">
+This graph shows how the income in 2011 of those who had consumed marijuana by 1997, differenciate by gender across different education levels.As also evidenced in the previous graph which didn't include the marijuana consumption, the gap between those at high school level is larger to those between a higher education level.
+Between 12 and 17 years of study: high school or higher, having consumer marijuana by 1997 doesn't present a difference in income for 2011, but the income gap by gender still remains.
+</font>
+
+#Interesting, let's explore how the income gap is affected with education and marital status. 
+```{r}
+nlsy.recode <- mutate(nlsy.recode,Highest_Grade_Completed_2011 = recode_factor(Highest_Grade_Completed_2011,
+                                             `0` = "NONE",
+                                             `1` = "1ST GRADE",
+                                             `2` = "2ND GRADE",
+                                             `3` = "3RD GRADE",
+                                             `4` = "4TH GRADE",
+                                             `5` = "5TH GRADE",
+                                             `6` = "6TH GRADE",
+                                             `7` = "7TH GRADE",
+                                             `8` = "8TH GRADE",
+                                             `9` = "9TH GRADE",
+                                             `10` = "10TH GRADE",
+                                             `11` = "11TH GRADE",
+                                             `12` = "12TH GRADE",
+                                             `95` = "UNGRADED",
+                                             `13` = "1ST YEAR COLLEGE",
+                                             `14` = "2ND YEAR COLLEGE",
+                                             `15` = "3RD YEAR COLLEGE",
+                                             `16` = "4TH YEAR COLLEGE",
+                                             `17` = "5TH YEAR COLLEGE",
+                                             `18` = "6TH YEAR COLLEGE",
+                                             `19` = "7TH YEAR COLLEGE",
+                                             `20` = "8TH YEAR COLLEGE OR MORE"))
+income.lm.sex.marital <- lm(Income ~ Sex + MaritalStatus_2017 + Highest_Grade_Completed_2011, data = nlsy.recode)
+summary(income.lm.sex.marital)
+```
+
+<font color="#157515">
+As we have seen throughout the analysis, female present a lower income when compared to men. Considering `MaritalStatus_2017` and the `Highest_Grade_Completed_2011`, women in average earn $`r round(abs(coef(income.lm.sex.marital)["SexFemale"]),0)` less than men.
+</font>
+
+
+
+```{r}
+income.lm.sex.degree <- lm(Income ~ Sex + Highest_Grade_Completed_2011, data = nlsy.recode)
+summary(income.lm.sex.degree)
+```
+```{r}
+anova(update(income.lm.sex.degree, . ~ . - Sex), income.lm.sex.degree)
+```
+
+
 ```{r ,fig.height = 4, fig.width = 8}
 ggplot(data = income.industries, aes(x = Industry_Code_2017, y = average.income, colour = Sex )) + 
   geom_point() + stat_smooth(method = 'lm', size = 1, fullrange = TRUE) + 
@@ -430,14 +517,14 @@ summary(income.lm.sex)
 ```
 ```{r}
 income.lm.bio.child.sex <- lm(Income ~ Children_HH_2009 + Sex, data = nlsy.recode)
-summary(income.lm.grade.sex)
+summary(income.lm.bio.child.sex)
 ```
 ```{r}
 anova(update(income.lm.grade.ind.sex, . ~ . - Sex), income.lm.grade.ind.sex)
 ```
 
 <font color="#157515">
-Income, sex and number of children. Would you expect income to increase regardless of gender as the family size increases? On the flip side, we want to explore whether a larger family size is correlated with a lack of education leading to a lower income across the board. If women are educated, they might have fewer children and that might contribute to their higher income. In order to do so, we have chosen the "biological children in household data" from 2009. We checked the data and it seemed to be replicated for all the years. We will run simple summaries and check for associations, next we will run a simple regression model to check for significance, and finally explore if there are any interactions between highest grade completed and  
+Income, sex and number of children. Would you expect income to increase regardless of gender as the family size increases? On the flip side, we want to explore whether a larger family size is correlated with a lack of education leading to a lower income across the board. If women are educated, they might have fewer children and that might contribute to their higher income. In order to do so, we have chosen the "biological children in household data" from 2009. We checked the data and it seemed to be replicated for all the years. We will run simple summaries and check for associations, next we will run a simple regression model to check for significance, and finally explore if there are any interactions between highest grade completed, number of children, sex and income.  
 
 </font>
 
@@ -449,14 +536,32 @@ num.bio.child <- nlsy.recode %>%
 num.bio.child <- filter(num.bio.child, !is.na(average.income),!is.na(Children_HH_2009))
 num.bio.child
 ```
-
+<font color="#157515">
+Running a simple summary shows us that, across the board, as the number of children increase womens' incomes are less than men. With the outlier response of $2,500 from Men with six children. This is something we can explore further.    
+</font>
 ```{r, fig.height = 4, fig.width = 9}
 ggplot(data = num.bio.child, aes(x = Children_HH_2009, y = average.income, fill = Sex)) + 
-  geom_bar(position="dodge", stat="identity") + 
+  geom_bar(position="dodge", stat="identity") +
   theme(axis.text.x=element_text(angle = 0, vjust = 0.5)) + 
   labs( x = "Number of Biological Children", y = "Average Income ($)")
 ```
+```{r}
+#running a simple regression model for Income, Biological Children and Sex 
+income.lm.bio.child.sex <- lm(Income ~ Children_HH_2009 + Sex, data = nlsy.recode)
+summary(income.lm.bio.child.sex)
+```
+<font color="#157515">
+From the simple regression, it seems that on average women earn `r round(coef(income.lm.bio.child.sex)["SexFemale"], 0)*-1` less than men given that the number of children are the same. This seems to be statistically significant with a p-value of `r income.lm.bio.child.sex$p.value`. 
+</font>
 
+<font color="#157515">
+Interesting, could adding the highest degree earned to the existing model exacerbate or mitigate the income gap between men and women?
+</font>
+
+```{r}
+income.lm.bio.child.sex.edu <- lm(Income ~ Children_HH_2009 + Sex + Highest_Grade_Completed_2011, data = nlsy.recode)
+summary(income.lm.bio.child.sex.edu)
+```
 
 ```{r}
 used.coca <- nlsy.recode %>%
@@ -482,6 +587,4 @@ num.bio.child <- nlsy.recode %>%
                             y = Income[Sex == "Female"])$conf.int[1],
             upper = t.test(x = Income[Sex == "Men"],
                             y = Income[Sex == "Female"])$conf.int[2], .groups = "keep")
-
-
 ```
