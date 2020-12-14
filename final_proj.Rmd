@@ -812,8 +812,15 @@ All else remaining constant, with each unit change in the household worth at 30,
 </font>
 
 ```{r}
-anova(update(income.hh_worth.lm, . ~ . - Sex), income.hh_worth.lm)
+nlsy.lm.interact.hh.worth <- update(income.hh_worth.lm, . ~ . + HH_NET_WORTH_30*Sex)
+summary(nlsy.lm.interact.hh.worth)
 ```
+
+<font color="#157515">
+The coefficient values `r round(abs(coef(nlsy.lm.interact.hh.worth))["HH_NET_WORTH_30"]),0)` are so small that we don't want to further in this analysis.
+
+Now we are going to filter the top coded Income.
+</font>
 
 ```{r}
 nlsy.recode.inc.filt <- filter(nlsy.recode, !(Income > 150000))
@@ -824,12 +831,17 @@ hh30_Income.plot + geom_point() + stat_smooth(method = 'lm', formula = y ~ x, si
   theme(axis.text.x=element_text(angle = 0, vjust = 0.5)) +
   labs( x = "Household worth at 30 years old", y = "Average Income ($)")
 ```
-
+<font color="#157515">
+The linear model for the average income after filtering the top coded incomes, shows that the higher the household worth, the larger the average income gap, without establishing that it is statistically significant. 
+</font>
 ```{r}
 Income_hh30.plot <- ggplot(data = nlsy.recode.inc.filt, aes(x = Income, y = HH_NET_WORTH_30 , colour = Sex )) 
 Income_hh30.plot + geom_point() + stat_smooth(method = 'lm', formula = y ~ x, size = 1) + theme(axis.text.x=element_text(angle = 0, vjust = 0.5)) + 
   labs( x = "Average Income ($)", y = "Household worth at 30 years old")
 ```
+<font color="#157515">
+Considering again whether the average income somewhat determines household worth, having filtered the topcoded incomes, with the linear model, we can see that in average females have a larger household worth for the same income levels, without establishing this is statistically significant.
+</font>
 ```{r}
 income.hh_worth.lm <- lm(Income ~ Sex + HH_NET_WORTH_30 + Highest_Grade_Completed_2011, data = nlsy.recode.inc.filt)
 summary(income.hh_worth.lm)
