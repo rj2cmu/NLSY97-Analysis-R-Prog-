@@ -24,11 +24,11 @@ nlsy <- read_csv("http://www.andrew.cmu.edu/user/achoulde/94842/final_project/nl
 
 To learn more about the data, you can have a look at the [variable codebook file](http://www.andrew.cmu.edu/user/achoulde/94842/final_project/nlsy97/nlsy97_codebook.txt).
 
-
-Here's how to rename all the variables to the Question Name abbreviation.  **You will want to change the names to be even more descriptive**, but this is a start.
-
+<font color="#800000">
+We will rename all the variables to an abbreviation to make them more descriptive. 
+</font>
 ```{r, warning = FALSE}
-# Change column names to question name abbreviations (you will want to change these further)
+# Change column names abbreviations
 colnames(nlsy) <- c("PSTRAN_GPA.01_PSTR",
     "INCARC_TOTNUM_XRND",
     "INCARC_AGE_FIRST_XRND",
@@ -166,26 +166,26 @@ Default Next Question: T76403.00
 This description says that the numbers -1, -2, -4 and -5 all have a special meaning for this variable.  They denote different types of missingness.  You can recode all of these to `NA`, but you should also think about whether the different missigness indicators are in some way informative.  (i.e., if someone refuses to answer questions related to drug use, might this inform us about their income?) 
 
 #### Getting to know our two main variables.
-
+<font color="#800000">
 In the previous chunk of code we have appropriately renamed the variables corresponding to `sex`, `race` and `income` (as reported on the 2017 survey).  Let's have a quick look at what we're working with.
-
+</font>
 ```{r, warning = FALSE}
 table(nlsy$Sex)
 
 table(nlsy$Race)
 ```
-
+<font color="#800000">
 The data codebook tells us that the coding for sex is `Male = 1`, `Female = 2`.  For the race/ethnicity variable, the coding is:
-
+</font>
 ```
 1 Black
 2 Hispanic
 3 Mixed Race (Non-Hispanic)
 4 Non-Black / Non-Hispanic
 ```
-
-You'll want to do some data manipulations to change away from the numeric codings to more interpretable labels. 
-
+<font color="#800000">
+we will do data manipulations as we go to change away from the numeric codings to labels that can be interpreted better. 
+</font>
 ```{r, warning = FALSE}
 summary(nlsy$Income)
 
@@ -193,7 +193,9 @@ summary(nlsy$Income)
 qplot(nlsy$Income)
 ```
 
+<font color="#800000">
 The income distributing is right-skewed like one might expect.  However, as indicated in the question description, the income variable is *topcoded* at the 2% level.  More precisely,
+</font>
 
 ```{r, warning = FALSE}
 n.topcoded <- with(nlsy, sum(Income == max(Income, na.rm = TRUE), na.rm = TRUE))
@@ -264,9 +266,9 @@ income.gender <- nlsy.recode %>%
 respondents <- table(nlsy.recode$Sex)
 kable(income.gender, format = "markdown", digits = 3)
 ```
+
 <font color="#800000">
 When assessing the data via a preliminary scan, we see that the average income for men is `r income.gender$average.income[1]` and the average income for women is `r income.gender$average.income[2]`, which amounts to a difference of `r income.gender$average.income[1] - income.gender$average.income[2]`.
-
 </font>
 
 ```{r, warning = FALSE}
@@ -323,6 +325,7 @@ The income.gap variable shows us the difference between average salaries of men 
 marital.gap <- ggplot(data = income.gap.marital,aes(x = reorder(MaritalStatus_2017, Income.gap), y = Income.gap))
 marital.gap + geom_bar(position="dodge", stat="identity")  + geom_errorbar(aes(ymin = lower, ymax = upper), width=.2, position = position_dodge(0.9)) +  theme(axis.text.x=element_text(angle = 0, vjust = 0.5)) + labs(x = "Marital Status", y = "Income Gap Between Genders")
 ```
+
 <font color="#800000">
 The error bars are below the 0-axis, therefore according to the data the results are not statistically significant. Running a regression model should corroborate our initial findings. First, we will run a simple regression on just income and sex; following which we will include marital status in the model
 </font>
@@ -331,6 +334,7 @@ The error bars are below the 0-axis, therefore according to the data the results
 lm.income.sex <- lm(Income ~ Sex, data = nlsy.recode)
 summary(lm.income.sex)
 ```
+
 <font color="#800000">
 From the simple regression, it seems that on average women earn `r round(coef(lm.income.sex)["SexFemale"], 0)*-1` less than men. This seems to be statistically significant with a p-value of `r lm.income.sex$p.value`
 </font>
@@ -339,6 +343,7 @@ From the simple regression, it seems that on average women earn `r round(coef(lm
 lm.income.sex.marital <- lm(Income ~ Sex + MaritalStatus_2017, data = nlsy.recode)
 summary(lm.income.sex.marital)
 ```
+
 <font color="#800000">
 All else considered constant, It seems that on average a married person earns `r round(coef(lm.income.sex.marital)["MaritalStatus_2017Married "], 0)` more than the baseline (never-married). This seems to be statistically significant with a p-value of `r lm.income.sex.marital$p.value`.
 </font>
@@ -355,6 +360,7 @@ From the analysis of variance table, we see that including marital status to gen
 lm.marital.interact <- update(lm.income.sex.marital, .~. + MaritalStatus_2017 * Sex)
 summary(lm.marital.interact)
 ```
+
 <font color="#800000">
 This interactive model corresponds to differences in earnings across gender and marital status that are not accounted for by a model that assumes independent effects for Marital status and gender. For instance, here we only see that the income difference among married men and married women is `r round(abs(coef(lm.marital.interact)["SexFemale:MaritalStatus_2017Married "]),0)*-1` less than the difference between single men and single women. However, we cannot conclude that marital status as a whole is a factor that is highly associated with the income gap between men and women. 
 </font>
@@ -364,7 +370,6 @@ This interactive model corresponds to differences in earnings across gender and 
 A natural shift from marriage would be children. Income, sex and number of children. Would you expect income gap to decrease regardless of gender as the family size increases? There are multiple theories that come into play here. Perhaps contributing factors could be a sense of income security leading to both genders having more children. On the flip side, the gap could exacerbate given that more and more women on average might switch to more lax jobs or choose to stay at home altogether. We think this is an interesting variable to explore. Additionally, we want to see whether a larger family size is correlated with a lack of education leading to a lower income across the board. If women are educated, they might have fewer children and that might contribute to their higher income and a reduction in the gap. 
 
 In order to , we have chosen the "biological children in household data" from 2009. We checked the data and it seemed to be replicated for all the years. We will run simple summaries and check for associations, next we will run a simple regression model to check for significance, and finally explore if there are any interactions between highest grade completed, number of children, sex and income.  
-
 </font>
 
 ```{r, warning = FALSE}
@@ -375,6 +380,7 @@ num.bio.child <- nlsy.recode %>%
 num.bio.child <- filter(num.bio.child, !is.na(average.income),!is.na(Children_HH_2009))
 num.bio.child
 ```
+
 <font color="#800000">
 We see a pattern, men's income on average increases up to 3 biological children. The gap in income between men and women remains; let's leave gender out of it and see if there's a variance in average income regardless as the number of children increase. 
 </font>
@@ -437,6 +443,7 @@ The graph above shows that the income gap seems to be the widest with three biol
 income.lm.bio.child.sex <- lm(Income ~ Sex + Children_HH_2009, data = nlsy.child.recode)
 summary(income.lm.bio.child.sex)
 ```
+
 <font color="#800000">
 From the simple regression, it seems that on average with each additional child respondents earn $`r round(coef(income.lm.bio.child.sex)["Children_HH_2009"], 0)` more. This is a very small number and is statistically insignificant. 
 </font>
@@ -457,7 +464,6 @@ summary(lm.child.interact)
 <font color="#800000">
 When we put these variables to the test, it shows a highly significant finding. This interactive model corresponds to differences in earnings across gender and biological children in household that are not accounted for by a model that assumes independent effects of each. It seems that on average the income difference between women with children and men with children is $`r round(coef(lm.child.interact )["SexFemale:Children_HH_2009"], 0)*-1` less than the difference between women and men that don't have children. This finding is highly significant according to the data. It's also interesting to note that now each additional child brings in `r round(coef(lm.child.interact )["Children_HH_2009"], 0)` more with income and it is statistically significant in the interaction.
 </font>
-
 
 <font color="#800000">
 Income, Sex, and Highest Grade Completed:
@@ -526,7 +532,6 @@ Income, Sex, and Industry: Is there a discrimination in Income across genders in
 </font>
 
 ```{r, warning = FALSE}
-nlsy.recode <- data_frame(nlsy.recode)
 industry.decoder <- c(rep(' AGRICULTURE, FORESTRY AND FISHERIES',121),rep('NA',79),
                     rep(' MINING',121),rep('NA',79),rep(' UTILITIES',121),
                     rep('NA',79),rep('CONSTRUCTION',1),rep('NA',299),
@@ -573,6 +578,7 @@ income.industries.sex <- nlsy.recode %>%
 ggplot(income.industries.avg, aes(x = reorder(Industry_Code_2017, average.income), y = average.income, fill = Industry_Code_2017)) + geom_bar(stat = "identity") +
   theme(axis.text.x = element_text(angle = 60, vjust = 1, hjust = 1)) + labs( x = "Industry", y= "Average Income")
 ```
+
 <font color="#800000">
 It seems like the average income in the mining industry is the highest versus accomodations and food services at the lowest point in the given data-set. Since, we already have information available for 2011 in the data-set, we want to explore if the income gap has changed over time within industries before we examine it specifically for 2017.
 </font>
@@ -636,6 +642,7 @@ gap.data.conf.ind
 ggplot(gap.data.conf.ind, aes(x = reorder(Industry_Code_2017, income.gap), y = income.gap, fill = Industry_Code_2017)) + geom_bar(stat = "identity") +
   theme(axis.text.x = element_text(angle = 60, vjust = 1, hjust = 1)) + labs( x = "Industry", y= "Income Gap") + ggtitle("Income gap between men and women, by Industry") + geom_errorbar(aes(ymax = upper, ymin = lower), width = 0.1, size = 1)
 ```
+
 <font color="#800000">
 We notice the highest income gap is in the financial and real estate institutions and this gap is statistically significant. However, if we look at industries such as wholesale trade, mining, utilities and information&communications, the error bars cross the 0-axis and this shows that the income gap here is not statistically significant. We will now move on to running regressions:  
 </font>
@@ -677,7 +684,6 @@ If your BMI is less than 18.5: it falls within the underweight range.
 If your BMI is 18.5 to <25, it falls within the normal. 
 If your BMI is 25.0 to <30, it falls within the overweight range. 
 If your BMI is 30.0 or higher, it falls within the obese range.
-
 </font>
 
 ```{r, warning = FALSE}
@@ -688,6 +694,7 @@ nlsy.recode$bmi <- (703 * nlsy.recode$Weight.Pound_2011) / ((nlsy.recode$Height.
 ```{r, warning = FALSE}
 ggplot(nlsy.recode, aes(x=bmi, y=Income, color=Sex)) + geom_point(size=0.2) + xlim(10,60) + geom_smooth(method="lm", se=FALSE)
 ```
+
 <font color="#800000">
 The graph above shows us that an income gap remains between men and women across varying BMIs. As the BMI increases, the income gap widens. This can also be analyzed through a simple regression model as well. 
 </font>
@@ -755,6 +762,7 @@ qplot(data = nlsy.recode, geom = "boxplot", x = Ever_Used_Coca_1998, y = Income,
 <font color="#800000">
 In the previous box-plot, we can see that the average income is same regardless of whether you have used cocaine.
 </font>
+
 ```{r, warning = FALSE}
 coca.income.lm <- lm(Income ~ Sex + Ever_Used_Coca_1998, data = nlsy.recode)
 summary(coca.income.lm)
@@ -817,6 +825,7 @@ We want to see whether the average income somewhat determines household worth. W
 income.hh_worth.lm <- lm(Income ~ Sex + HH_NET_WORTH_30, data = nlsy.recode)
 summary(income.hh_worth.lm)
 ```
+
 <font color="#800000">
 All else remaining constant, with each unit change in the household worth at 30, there is a very small change of `r round(abs(coef(income.hh_worth.lm )["HH_NET_WORTH_30"]),0)` in income. Regardless of gender.
 </font>
@@ -841,14 +850,17 @@ hh30_Income.plot + geom_point() + stat_smooth(method = 'lm', formula = y ~ x, si
   theme(axis.text.x=element_text(angle = 0, vjust = 0.5)) +
   labs( x = "Household worth at 30 years old", y = "Average Income ($)")
 ```
+
 <font color="#800000">
 The linear model for the average income after filtering the top coded incomes, shows that the higher the household worth, the larger the average income gap, without establishing that it is statistically significant. 
 </font>
+
 ```{r, warning = FALSE}
 Income_hh30.plot <- ggplot(data = nlsy.recode.inc.filt, aes(x = Income, y = HH_NET_WORTH_30 , colour = Sex )) 
 Income_hh30.plot + geom_point() + stat_smooth(method = 'lm', formula = y ~ x, size = 1) + theme(axis.text.x=element_text(angle = 0, vjust = 0.5)) + 
   labs( x = "Average Income ($)", y = "Household worth at 30 years old")
 ```
+
 <font color="#800000">
 Considering again whether the average income somewhat determines household worth, having filtered the top-coded incomes, with the linear model, we can see that in average females have a larger household worth for the same income levels, without establishing this is statistically significant.
 </font>
@@ -898,7 +910,24 @@ Below plot confirms the same. We've removed gender from the analysis and we see 
 ```{r, warning = FALSE}
 ggplot(nlsy.recode, aes(x=ASSETS_DEBTS_30, y=Income)) + geom_point(size=0.2) + geom_smooth(method="loess", se=FALSE) + labs(x="Debt at the age of 30 (in $)", y="Income in $", title="Debt at 30 vs. Income")
 ```
+<font color="#800000">
+We want to now plot all our variables against a final regression model. We've used eight variables in our analysis and regardless of whether they are significant or not we run the linear regression plots as a diagnostic tool. After that, we will run the variables that fit our analysis better. 
+</font>
 
+```{r, warning=FALSE, fig.height = 6, fig.width = 10}
+lm.final.all <- lm(Income ~ MaritalStatus_2017 + Children_HH_2011 + Highest_Grade_Completed_2011 + Industry_Code_2011 + Ever_Used_Coca_1998 + bmi + HH_NET_WORTH_30 + ASSETS_DEBTS_30, data = nlsy.recode)
+par(mfrow = c(2, 2))
+plot(lm.final.all)
+```
+<font color="#800000">
+We want to now plot all our variables against a final regression model. We've used eight variables in our analysis and regardless of whether they are significant or not we run the linear regression plots. After that, we will run the variables that fit our analysis better. 
+</font>
+
+```{r, warning=FALSE, fig.height = 6, fig.width = 10}
+lm.final.sig <- lm(Income ~ MaritalStatus_2017 + Children_HH_2011 + bmi + HH_NET_WORTH_30 + ASSETS_DEBTS_30, data = nlsy.recode)
+par(mfrow = c(2, 2))
+plot(lm.final.sig)
+```
 
 
 
