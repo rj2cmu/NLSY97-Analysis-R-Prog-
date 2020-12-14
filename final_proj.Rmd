@@ -716,7 +716,7 @@ summary(lm.bmi.interact)
 ```
 
 <font color="#157515">
-The interaction term SexFemale:bmi shows that with each unit increase in BMI the income gap increases. 
+The interaction term SexFemale:bmi negative coefficient shows that with each unit increase in BMI the income gap increases. 
 </font>
 
 ```{r}
@@ -733,56 +733,29 @@ used.coca <- nlsy.recode %>%
               }
             ), .groups = 'keep')
 used.coca
-
 ```
-
-
-
 
 ```{r}
-education.indicator <- filter(nlsy.recode, !(nlsy.education$Highest_Grade_Completed_2011 == "NONE"),
-                              !(nlsy.education$Highest_Grade_Completed_2011 == "1ST GRADE"),
-                              !(nlsy.education$Highest_Grade_Completed_2011 == "2ND GRADE"),
-                              !(nlsy.education$Highest_Grade_Completed_2011 == "3RD GRADE"),
-                              !(nlsy.education$Highest_Grade_Completed_2011 == "4TH GRADE"),
-                              !(nlsy.education$Highest_Grade_Completed_2011 == "5TH GRADE"),
-                              !(nlsy.education$Highest_Grade_Completed_2011 == "6TH GRADE"),
-                              !(nlsy.education$Highest_Grade_Completed_2011 == "7TH GRADE"),
-                              !(nlsy.education$Highest_Grade_Completed_2011 == "UNGRADED"),
-                              !is.na(nlsy.education$Highest_Grade_Completed_2011),
-                              !is.na(nlsy.education$Income))
-ed.indicator <- education.indicator %>%
-  group_by(Highest_Grade_Completed_2011) %>%
-  summarize(mean = mean(Income),
-            lower = t.test(Income)$conf.int[1],
-            upper = t.test(Income)$conf.int[2],
-            is.signif = as_factor(
-              if (lower<0 & upper>0){
-                is.signif = 0
-              } else {
-                is.signif = 1
-              }
-              ), .groups = 'keep')
-
+nlsy.recode <- mutate(nlsy.recode,Ever_Used_Coca_1998 = recode_factor(Ever_Used_Coca_1998,
+                                             `0` = "No",
+                                             `1` = "Yes"))
+qplot(data = nlsy.recode, geom = "boxplot", x = Ever_Used_Coca_1998, y = Income, fill = Ever_Used_Coca_1998) + labs(x = "Ever Used Cocaine")
 ```
 
-
+<font color="#157515">
+In the previous boxplot, we can see that the the average income is slightly higher for those who hadn't consumed cocaine by 1998, but we still don't know if it statistically sifnificant. 
+</font>
 ```{r}
-education.indicator <- mutate(ed.indicator,
-                     Highest_Grade_Completed_2011 = factor(Highest_Grade_Completed_2011,
-                     levels = c("8TH GRADE", "9TH GRADE", "10TH GRADE",
-                     "11TH GRADE", "12TH GRADE", "1ST YEAR COLLEGE", "2ND YEAR COLLEGE",
-                     "3RD YEAR COLLEGE", "4TH YEAR COLLEGE", "5TH YEAR COLLEGE", "6TH YEAR COLLEGE",
-                     "7TH YEAR COLLEGE", "8TH YEAR COLLEGE OR MORE")))
-nlsy.education.plot <- ggplot(data = ed.indicator,
-                              aes(x = Highest_Grade_Completed_2011, y = mean,
-                                  fill = is.signif))
-nlsy.education.plot + geom_bar(position="dodge", stat="identity") +
-  guides(fill = guide_legend(title = "Statistically Significant")) +
-  geom_errorbar(aes(ymin = lower, ymax = upper), 
-                width=.2, position = position_dodge(0.9)) +
-  theme(axis.text.x=element_text(angle = 90, vjust = 0.5))
+coca.income.lm <- lm(Income ~ Sex + Ever_Used_Coca_1998, data = nlsy.recode)
+summary(coca.income.lm)
 ```
+  
+<font color="#157515">
+As seen from the results above, cocaine consumption does not have significant effect on income.
+
+Now let's see the household worth for the respondents at age of 30. 
+</font>
+
 
 ```{r}
 worth.30.means <- nlsy.recode %>%
@@ -805,20 +778,38 @@ worth.30.means.plot + geom_bar(position="dodge", stat="identity") +
   guides(fill = guide_legend(title = "Sex")) +
   geom_errorbar(aes(ymin = lower, ymax = upper), 
                 width=.2, position = position_dodge(0.9)) +
-  theme(axis.text.x=element_text(angle = 90, vjust = 0.5))
+  theme(axis.text.x=element_text(angle = 90, vjust = 0.5)) + labs(x = "Sex", y = "Household worth at age of 30")
 ```
+
+<font color="#157515">
+In the boxplot we can see than in averge, household worth of the respondants at age of 30 is higher for men compared to female.
+</font>
+
 ```{r}
 ggplot(data = nlsy.recode, aes(x = HH_NET_WORTH_30, y = Income , colour = Sex )) + geom_point() + stat_smooth(method = 'loess', formula = y ~ x, size = 1) + theme(axis.text.x=element_text(angle = 0, vjust = 0.5)) + 
   labs( x = "Household worth at 30 years old", y = "Average Income ($)")
 ```
+
+<font color="#157515">
+Without having filtered the top coded incomes, we see that the gap in average income between men and women gets larger as the household worth at 30 yrs increases.
+</font>
+
 ```{r}
 ggplot(data = nlsy.recode, aes(x = Income, y = HH_NET_WORTH_30 , colour = Sex )) + geom_point() + stat_smooth(method = 'loess', formula = y ~ x, size = 1) + theme(axis.text.x=element_text(angle = 0, vjust = 0.5)) + 
   labs( x = "Average Income ($)", y = "Household worth at 30 years old")
 ```
+
+<font color="#157515">
+We want to see whether the average income somewhat determines household worth. We can see that females tend to have on average a higher sense of household worth when they have the same income as men.
+</font>
+
 ```{r}
 income.hh_worth.lm <- lm(Income ~ Sex + HH_NET_WORTH_30, data = nlsy.recode)
 summary(income.hh_worth.lm)
 ```
+<font color="#157515">
+All else remaining constant, with each unit change in the household worth at 30, there is a very small change of `r round(abs(coef(income.hh_worth.lm )["HH_NET_WORTH_30"]),0)` in income. Regardless of gender.
+</font>
 
 ```{r}
 anova(update(income.hh_worth.lm, . ~ . - Sex), income.hh_worth.lm)
