@@ -275,10 +275,10 @@ ggplot(nlsy.recode, aes(Income, fill = Sex)) + geom_histogram(alpha = 0.5, posit
 ```
 
 <font color="#157515">
-After removing the NAN values in income. the number of female respondents is (`r respondents[2]`) compared to men (`r respondents[1]`). With the histogram, we see as the income progresses on the x-axis; men take the lead in reporting; whereas, in the lower range, women seem to be the higher number of respondents. Furthermore, we can assess that the data-set is left-skewed. It is important to note that it seems like the data is left-skewed. Let's move on to assess income gaps and gender with other variables. First up, is Marital Status.
+After removing the NAN values in income. the number of female respondents is (`r respondents[2]`) compared to men (`r respondents[1]`). With the histogram, we see as the income progresses on the x-axis; men take the lead in reporting higher salaries; whereas, in the lower range, women seem to be the higher number of respondents. Furthermore, it is important to note that it seems like the data is left-skewed. Let's move on to assess income gaps and gender with other variables. First up, is Marital Status.
 
 <b>Income, Sex, and Marital Status<b>:
-Would you expect a single man to earn more than a single woman? Or could a divorced man earn more than a divorced woman? Our expectation would be that marital status should not affect income depending on gender. Let's find out.
+Would you expect a single man to earn more than a single woman? Or could a divorced man earn more than a divorced woman? Our expectation would be that marital status should not affect income gap. There could; however, be a dent in the income gap if a married woman decides to take the role of a home-maker or a part-time job as per societal expectations. Let's find out.
 </font>
 
 ```{r}
@@ -320,8 +320,8 @@ The income.gap variable shows us the difference between average salaries of men 
 </font>
 
 ```{r}
-marital.gap <- ggplot(data = income.gap.marital,aes(x = MaritalStatus_2017, y = Income.gap, fill = is.significant))
-marital.gap + geom_bar(position="dodge", stat="identity") + guides(fill = guide_legend(title = "Statistically Significant")) + geom_errorbar(aes(ymin = lower, ymax = upper), width=.2, position = position_dodge(0.9)) +  theme(axis.text.x=element_text(angle = 0, vjust = 0.5)) + labs(x = "Marital Status", y = "Income Gap Between Genders")
+marital.gap <- ggplot(data = income.gap.marital,aes(x = reorder(MaritalStatus_2017, Income.gap), y = Income.gap))
+marital.gap + geom_bar(position="dodge", stat="identity")  + geom_errorbar(aes(ymin = lower, ymax = upper), width=.2, position = position_dodge(0.9)) +  theme(axis.text.x=element_text(angle = 0, vjust = 0.5)) + labs(x = "Marital Status", y = "Income Gap Between Genders")
 ```
 <font color="#157515">
 The error bars are below the 0-axis, therefore according to the data the results are not statistically significant. Running a regression model should corroborate our initial findings. First, we will run a simple regression on just income and sex; following which we will include marital status in the model
@@ -340,12 +340,15 @@ lm.income.sex.marital <- lm(Income ~ Sex + MaritalStatus_2017, data = nlsy.recod
 summary(lm.income.sex.marital)
 ```
 
+It seems that on average married person earns `r round(coef(lm.income.sex.marital)["MaritalStatus_2017Married "], 0)*` more than the baseline (never-married). This seems to be statistically significant with a p-value of `r lm.income.sex.marital$p.value`.
+</font>
+
 ```{r}
 anova(lm.income.sex , lm.income.sex.marital)
 ```
 
 <font color="#157515">
-From the anova, we see that including marital status to gender has an impact on the income gap and it is significant.   
+From the analysis of variance table, we see that including marital status to gender has an impact on the income gap and it is significant.   
 </font>
 
 ```{r}
@@ -355,6 +358,111 @@ summary(lm.marital.interact)
 <font color="#157515">
 This interactive model corresponds to differences in earnings across gender and marital status that are not accounted for by a model that assumes independent effects for Marital status and gender. For instance, here we only see that the income difference among married men and married women is $16396 less than the difference between single men and single women. However, we cannot conclude that marital status as a whole is a factor that is highly associated with the income gap between men and women. 
 </font>
+
+
+<font color="#157515">
+A natural shift from marriage would be children. Income, sex and number of children. Would you expect income gap to decrease regardless of gender as the family size increases? There are multiple theories that come into play here. Perhaps contributing factors could be a sense of income security leading to both genders having more children. On the flip side, the gap could exacerbate given that more and more women on average might switch to more lax jobs or choose to stay at home altogether. We think this is an interesting variable to explore. Additionally, we want to see whether a larger family size is correlated with a lack of education leading to a lower income across the board. If women are educated, they might have fewer children and that might contribute to their higher income and a reduction in the gap. 
+
+In order to , we have chosen the "biological children in household data" from 2009. We checked the data and it seemed to be replicated for all the years. We will run simple summaries and check for associations, next we will run a simple regression model to check for significance, and finally explore if there are any interactions between highest grade completed, number of children, sex and income.  
+
+</font>
+
+```{r}
+num.bio.child <- nlsy.recode %>%
+  group_by(Children_HH_2009, Sex) %>%
+  summarize(average.income = mean(Income, na.rm = TRUE))
+
+num.bio.child <- filter(num.bio.child, !is.na(average.income),!is.na(Children_HH_2009))
+num.bio.child
+```
+<font color="#157515">
+We see a pattern, men's income on average increases up to 3 biological children. The gap in income between men and women remains; let's leave gender out of it and see if there's a variance in average income regardless as the number of children increase. 
+</font>
+
+```{r, fig.height = 4, fig.width = 9}
+ggplot(data = num.bio.child, aes(x = Children_HH_2009, y = average.income, fill = Sex)) + 
+  geom_bar(position="dodge", stat="identity") +
+  theme(axis.text.x=element_text(angle = 0, vjust = 0.5)) + 
+  labs( x = "Number of Biological Children", y = "Average Income ($)")
+```
+
+<font color="#157515">
+We see a pattern, men's income on average increases up to 3 biological children. The gap in income between men and women remains; let's leave gender out of it and see if there's a variance in average income regardless as the number of children increase. 
+</font>
+
+
+```{r, fig.height = 4, fig.width = 9}
+ggplot(data = num.bio.child, aes(x = Children_HH_2009, y = average.income)) + 
+  geom_bar(position="dodge", stat="identity") +
+  theme(axis.text.x=element_text(angle = 0, vjust = 0.5)) + 
+  labs( x = "Number of Biological Children", y = "Average Income ($)")
+```
+
+<font color="#157515">
+Again, regardless of gender the pattern showcases that the average income increases up to 3 children. Let's get to the notorious question of income gap! For this analysis, we will take out the outlier reported for people with six children or more ($2,500 for men).
+</font>
+
+```{r}
+nlsy.child.recode <- filter(nlsy.recode, !(Children_HH_2009 == 6))
+
+gap.data.conf.child <- nlsy.child.recode %>%
+  group_by(Children_HH_2009) %>%
+  summarize(income.gap = mean(Income[Sex == "Men"], na.rm = TRUE) -
+              mean(Income[Sex == "Female"], na.rm = TRUE),
+            lower = t.test(Income ~ Sex)$conf.int[1],
+            upper = t.test(Income ~ Sex)$conf.int[2],
+            is.significant = as.numeric(t.test(Income ~ Sex)$p.value < 0.05), .groups = "keep")
+gap.data.conf.child
+```
+
+```{r}
+#Plot, with error bars
+ggplot(data = gap.data.conf.child, aes(x = Children_HH_2009, y = income.gap,
+                            fill = is.significant)) +
+  geom_bar(stat = "identity") +
+  xlab("Biological Children in Household") + 
+  ylab("Income gap($)") +
+  ggtitle("Income gap between men and women, by children") + 
+  guides(fill = FALSE) +
+  geom_errorbar(aes(ymax = upper, ymin = lower), width = 0.1, size = 1) +
+  theme(text = element_text(size=12)) 
+```
+
+<font color="#157515">
+The graph above shows that the income gap seems to be the widest with three biological children in the household. Since the error bars do not cross the 0-axis, it's statistically significant.     
+</font>
+
+```{r}
+#running a simple regression model for Income, Biological Children and Sex 
+income.lm.bio.child.sex <- lm(Income ~ Sex + Children_HH_2009, data = nlsy.child.recode)
+summary(income.lm.bio.child.sex)
+```
+<font color="#157515">
+From the simple regression, it seems that on average with each additional child respondents earn $`r round(coef(income.lm.bio.child.sex)["Children_HH_2009"], 0)` more. This is a very small number and is statistically insignificant. 
+</font>
+
+```{r}
+lm.child.interact <- update(income.lm.bio.child.sex , .~. + Children_HH_2009 * Sex)
+summary(lm.child.interact)
+```
+
+<font color="#157515">
+When we put these variables to the test, it shows a highly significant finding. This interactive model corresponds to differences in earnings across gender and biological children in household that are not accounted for by a model that assumes independent effects of each. It seems that on average the income difference between women with children and men with children is $`r round(coef(lm.child.interact )["SexFemale:Children_HH_2009"], 0)*-1` less than the difference between women and men that don't have children. This finding is highly significant according to the data. It's also interesting to note that now each additional child brings in `r round(coef(lm.child.interact )["Children_HH_2009"], 0)` more with income and it is statistically significant in the interaction.
+</font>
+
+
+```{r}
+nlsy.child.recode <- mutate(nlsy.child.recode, Children_HH_2009 = recode_factor(Children_HH_2009,
+                                `0` = "Child.0",
+                                `1` = "Child.1",
+                                `2` = "Child.2",
+                                `3` = "Child.3",
+                                `4` = "Child.4",
+                                `5` = "Child.5"))
+
+income.lm.bio.child.sex.factor <- lm(Income ~ Sex + Children_HH_2009, data = nlsy.child.recode)
+summary(income.lm.bio.child.sex.factor)
+```
 
 <font color="#157515">
 Income, Sex, and Highest Grade Completed:
@@ -367,7 +475,7 @@ ggplot(data = nlsy.recode, aes(x = Highest_Grade_Completed_2011, y = Income , co
 ```
 
 <font color="#157515">
-In the graph, we can see an evolution of the income gap between men and women, depending on the highest degree completed. The income gap between men and women becomes smaller as the degree completed approaches 12, that is "12th grade" or equivalent to a high school diploma. Before exploring this further, we want to analyze other interesting variables such as marjiuana consumption with highest degree completed, sex and average income. 
+In the graph, we can see an evolution of the income gap between men and women, depending on the highest degree completed. The income difference between men and women becomes smaller as the degree completed approaches 12, that is "12th grade" or equivalent to a high school diploma. Before exploring this further, we want to analyze other interesting variables such as marijuana consumption with highest degree completed, sex and average income. 
 </font>
 
 ```{r}
@@ -528,43 +636,12 @@ confint(income.lm.grade.ind.sex, parm = "Sex")
 
 
 ```{r}
-income.lm.bio.child.sex <- lm(Income ~ Children_HH_2009 + Sex, data = nlsy.recode)
-summary(income.lm.bio.child.sex)
-```
-```{r}
 anova(update(income.lm.grade.ind.sex, . ~ . - Sex), income.lm.grade.ind.sex)
 ```
 
-<font color="#157515">
-Income, sex and number of children. Would you expect income to increase regardless of gender as the family size increases? On the flip side, we want to explore whether a larger family size is correlated with a lack of education leading to a lower income across the board. If women are educated, they might have fewer children and that might contribute to their higher income. In order to do so, we have chosen the "biological children in household data" from 2009. We checked the data and it seemed to be replicated for all the years. We will run simple summaries and check for associations, next we will run a simple regression model to check for significance, and finally explore if there are any interactions between highest grade completed, number of children, sex and income.  
 
-</font>
 
-```{r}
-num.bio.child <- nlsy.recode %>%
-  group_by(Children_HH_2009, Sex) %>%
-  summarize(average.income = mean(Income, na.rm = TRUE))
 
-num.bio.child <- filter(num.bio.child, !is.na(average.income),!is.na(Children_HH_2009))
-num.bio.child
-```
-<font color="#157515">
-Running a simple summary shows us that, across the board, as the number of children increase womens' incomes are less than men. With the outlier response of $2,500 from Men with six children. This is something we can explore further.    
-</font>
-```{r, fig.height = 4, fig.width = 9}
-ggplot(data = num.bio.child, aes(x = Children_HH_2009, y = average.income, fill = Sex)) + 
-  geom_bar(position="dodge", stat="identity") +
-  theme(axis.text.x=element_text(angle = 0, vjust = 0.5)) + 
-  labs( x = "Number of Biological Children", y = "Average Income ($)")
-```
-```{r}
-#running a simple regression model for Income, Biological Children and Sex 
-income.lm.bio.child.sex <- lm(Income ~ Children_HH_2009 + Sex, data = nlsy.recode)
-summary(income.lm.bio.child.sex)
-```
-<font color="#157515">
-From the simple regression, it seems that on average women earn `r round(coef(income.lm.bio.child.sex)["SexFemale"], 0)*-1` less than men given that the number of children are the same. This seems to be statistically significant with a p-value of `r income.lm.bio.child.sex$p.value`. 
-</font>
 
 <font color="#157515">
 Interesting, could adding the highest degree earned to the existing model exacerbate or mitigate the income gap between men and women?
