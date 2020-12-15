@@ -1,9 +1,14 @@
 ---
 title: "NLSY97 Snapshot Analysis (Based on Gender)"
-author: "Anum Malik <anumm>, Rishabh Jain <rj2>, Javier Rico Aristizabal <jricoari>"
+author: "Anum Malik (anumm), Rishabh Jain (rj2), Javier Rico Aristizabal (jricoari)"
 date: '14th December 2020, Monday'
 output: html_document
 ---
+
+```{r set-options, echo=FALSE, cache=FALSE}
+#increasing the page width
+options(width = 350)
+```
 
 #### Package loading
 
@@ -190,7 +195,7 @@ we will do data manipulations as we go to change away from the numeric codings t
 summary(nlsy$Income)
 
 # Histogram
-qplot(nlsy$Income)
+qplot(nlsy$Income) + labs(x="Income in $", y="Frequency", title="Histogram for Income")
 ```
 
 <font color="#800000">
@@ -273,7 +278,7 @@ When assessing the data via a preliminary scan, we see that the average income f
 
 ```{r, warning = FALSE}
 ggplot(nlsy.recode, aes(Income, fill = Sex)) + geom_histogram(alpha = 0.5, position = 'identity') +
-  labs (x = "Income", y = "Number of Respondents")
+  labs (x = "Income", y = "Number of Respondents", title = "Income histogram by Sex")
 ```
 
 <font color="#800000">
@@ -323,7 +328,7 @@ The income.gap variable shows us the difference between average salaries of men 
 
 ```{r, warning = FALSE}
 marital.gap <- ggplot(data = income.gap.marital,aes(x = reorder(MaritalStatus_2017, Income.gap), y = Income.gap))
-marital.gap + geom_bar(position="dodge", stat="identity")  + geom_errorbar(aes(ymin = lower, ymax = upper), width=.2, position = position_dodge(0.9)) +  theme(axis.text.x=element_text(angle = 0, vjust = 0.5)) + labs(x = "Marital Status", y = "Income Gap Between Genders")
+marital.gap + geom_bar(position="dodge", stat="identity")  + geom_errorbar(aes(ymin = lower, ymax = upper), width=.2, position = position_dodge(0.9)) +  theme(axis.text.x=element_text(angle = 0, vjust = 0.5)) + labs(x = "Marital Status", y = "Income Gap Between Genders", title = "Income Gap with Error Bars")
 ```
 
 <font color="#800000">
@@ -389,7 +394,7 @@ We see a pattern, men's income on average increases up to 3 biological children.
 ggplot(data = num.bio.child, aes(x = Children_HH_2009, y = average.income, fill = Sex)) + 
   geom_bar(position="dodge", stat="identity") +
   theme(axis.text.x=element_text(angle = 0, vjust = 0.5)) + 
-  labs( x = "Number of Biological Children", y = "Average Income ($)")
+  labs( x = "Number of Biological Children", y = "Average Income ($)", title="Number of biological childern vs. Average Income (Grouped by Sex)")
 ```
 
 <font color="#800000">
@@ -401,7 +406,7 @@ We see a pattern, men's income on average increases up to 3 biological children.
 ggplot(data = num.bio.child, aes(x = Children_HH_2009, y = average.income)) + 
   geom_bar(position="dodge", stat="identity") +
   theme(axis.text.x=element_text(angle = 0, vjust = 0.5)) + 
-  labs( x = "Number of Biological Children", y = "Average Income ($)")
+  labs( x = "Number of Biological Children", y = "Average Income ($)", title = "Number of biological childern vs. Average Income")
 ```
 
 <font color="#800000">
@@ -472,7 +477,7 @@ We expect to see an impact on income gap and the highest degree completed. We wa
 
 ```{r, warning = FALSE}
 ggplot(data = nlsy.recode, aes(x = Highest_Grade_Completed_2011, y = Income , colour = Sex )) + geom_point() + stat_smooth(method = 'loess', formula = y ~ x, size = 1) + theme(axis.text.x=element_text(angle = 0, vjust = 0.5)) + xlim(0,22) + 
-  labs( x = "Highest Degree Completed", y = "Average Income ($)")
+  labs( x = "Highest Degree Completed", y = "Average Income ($)", title="Highest Degree Completed vs. Average Income (Grouped by Sex)")
 ```
 
 <font color="#800000">
@@ -563,7 +568,7 @@ nlsy.recode[["Industry_Code_2017"]] <- sapply(nlsy.recode[["Industry_Code_2017"]
 First, we look at the general average income in each industry irrespective of gender, showcased by the plot below.
 </font>
 
-```{r, warning = FALSE,fig.height = 10, fig.width = 20}
+```{r, warning = FALSE,fig.height = 8, fig.width = 15}
 #general average income without gender grouping
 income.industries.avg <- nlsy.recode %>%
   group_by(Industry_Code_2017) %>%
@@ -576,7 +581,7 @@ income.industries.sex <- nlsy.recode %>%
 
 
 ggplot(income.industries.avg, aes(x = reorder(Industry_Code_2017, average.income), y = average.income, fill = Industry_Code_2017)) + geom_bar(stat = "identity") +
-  theme(axis.text.x = element_text(angle = 60, vjust = 1, hjust = 1)) + labs( x = "Industry", y= "Average Income")
+  theme(axis.text.x = element_text(angle = 60, vjust = 1, hjust = 1)) + labs( x = "Industry", y= "Average Income in $", title = "Industry-wise Average Income Distribution")
 ```
 
 <font color="#800000">
@@ -615,7 +620,7 @@ ind.income.sex.time <- rbind(income.industries.sex.2017.r, income.industries.sex
 ggplot(data = ind.income.sex.time, aes(x = year, y = average.income, color = Sex)) +
   facet_wrap( ~ Industry) +
   geom_point() +
-  geom_smooth(method = "lm") + labs(x = "Year", y = "Average Income")
+  geom_smooth(method = "lm") + labs(x = "Year", y = "Average Income", title = "Year vs. Average Income (Grouped by Sex and Industry)")
 ```
 
 <font color="#800000">
@@ -638,7 +643,7 @@ gap.data.conf.ind <- nlsy.recode.ind %>%
             is.significant = as.numeric(t.test(Income ~ Sex)$p.value < 0.05), .groups = "keep")
 gap.data.conf.ind
 ```
-```{r, warning = FALSE,fig.height = 10, fig.width = 20}
+```{r, warning = FALSE,fig.height = 8, fig.width = 15}
 ggplot(gap.data.conf.ind, aes(x = reorder(Industry_Code_2017, income.gap), y = income.gap, fill = Industry_Code_2017)) + geom_bar(stat = "identity") +
   theme(axis.text.x = element_text(angle = 60, vjust = 1, hjust = 1)) + labs( x = "Industry", y= "Income Gap") + ggtitle("Income gap between men and women, by Industry") + geom_errorbar(aes(ymax = upper, ymin = lower), width = 0.1, size = 1)
 ```
@@ -692,7 +697,7 @@ nlsy.recode$bmi <- (703 * nlsy.recode$Weight.Pound_2011) / ((nlsy.recode$Height.
 ```
 
 ```{r, warning = FALSE}
-ggplot(nlsy.recode, aes(x=bmi, y=Income, color=Sex)) + geom_point(size=0.2) + xlim(10,60) + geom_smooth(method="lm", se=FALSE)
+ggplot(nlsy.recode, aes(x=bmi, y=Income, color=Sex)) + geom_point(size=0.2) + xlim(10,60) + geom_smooth(method="lm", se=FALSE) + labs(x="Body Mass Index (BMI)", y="Income in $", title = "BMI vs. Income (Grouped by Sex)")
 ```
 
 <font color="#800000">
@@ -734,7 +739,7 @@ We want to explore whether the use of cocaine will affect income. We think that 
 nlsy.recode <- mutate(nlsy.recode,Ever_Used_Coca_1998 = recode_factor(Ever_Used_Coca_1998,
                                              `0` = "No",
                                              `1` = "Yes"))
-qplot(data = nlsy.recode, geom = "boxplot", x = Ever_Used_Coca_1998, y = Income, fill = Ever_Used_Coca_1998) + labs(x = "Ever Used Cocaine")
+qplot(data = nlsy.recode, geom = "boxplot", x = Ever_Used_Coca_1998, y = Income, fill = Ever_Used_Coca_1998) + labs(x = "Ever Used Cocaine", y="Income in $", title = "Bar Plot of Cocaine Usage")
 ```
 
 <font color="#800000">
@@ -743,7 +748,7 @@ In the previous box-plot, we can see that the average income is the same regardl
 
 ```{r, warning=FALSE}
 coca.income <- ggplot(nlsy.recode, aes(x = Income))
-coca.income + geom_density(aes(fill = Ever_Used_Coca_1998), alpha = 0.3) + scale_color_manual(values = c("#999999", "#E69F00", "#56B4E9")) + scale_fill_manual(values = c("#999999", "#E69F00", "#56B4E9")) + labs(x="Income in $", y="Respondent density", title="Density Function for Income (Separated by Cocaine Usage)")
+coca.income + geom_density(aes(fill = Ever_Used_Coca_1998), alpha = 0.3) + scale_color_manual(values = c("#999999", "#E69F00", "#56B4E9")) + scale_fill_manual(values = c("#999999", "#E69F00", "#56B4E9")) + labs(x="Income in $", y="Respondent density", title="Density Function for Income (Group by Cocaine Usage)")
 ```
 
 <font color="#800000">
@@ -783,7 +788,7 @@ worth.30.means.plot + geom_bar(position="dodge", stat="identity") +
   guides(fill = guide_legend(title = "Sex")) +
   geom_errorbar(aes(ymin = lower, ymax = upper), 
                 width=.2, position = position_dodge(0.9)) +
-  theme(axis.text.x=element_text(angle = 90, vjust = 0.5)) + labs(x = "Sex", y = "Household worth at age of 30")
+  theme(axis.text.x=element_text(angle = 90, vjust = 0.5)) + labs(x = "Sex", y = "Household worth at age of 30", title = "Bar plot of Sex vs. Household Worth at 30")
 ```
 
 <font color="#800000">
@@ -792,7 +797,7 @@ In the boxplot we can see than in average, household worth of the respondants at
 
 ```{r, warning = FALSE}
 ggplot(data = nlsy.recode, aes(x = HH_NET_WORTH_30, y = Income , colour = Sex )) + geom_point() + stat_smooth(method = 'loess', formula = y ~ x, size = 1) + theme(axis.text.x=element_text(angle = 0, vjust = 0.5)) + 
-  labs( x = "Household worth at 30 years old", y = "Average Income ($)")
+  labs( x = "Household worth at 30 years old", y = "Average Income ($)", title = "Household Worth at 30 vs. Average Income (Group by Sex)")
 ```
 
 <font color="#800000">
@@ -801,7 +806,7 @@ Without having filtered the top coded incomes, we see that the gap in average in
 
 ```{r, warning = FALSE}
 ggplot(data = nlsy.recode, aes(x = Income, y = HH_NET_WORTH_30 , colour = Sex )) + geom_point() + stat_smooth(method = 'loess', formula = y ~ x, size = 1) + theme(axis.text.x=element_text(angle = 0, vjust = 0.5)) + 
-  labs( x = "Average Income ($)", y = "Household worth at 30 years old")
+  labs( x = "Average Income ($)", y = "Household worth at 30 years old", title = "Average Income vs. Household Worth at 30 (Group by Sex)")
 ```
 
 <font color="#800000">
@@ -835,7 +840,7 @@ hh30_Income.plot <- ggplot(data = nlsy.recode.inc.filt, aes(x = HH_NET_WORTH_30,
 
 hh30_Income.plot + geom_point() + stat_smooth(method = 'lm', formula = y ~ x, size = 1) +
   theme(axis.text.x=element_text(angle = 0, vjust = 0.5)) +
-  labs( x = "Household worth at 30 years old", y = "Average Income ($)")
+  labs( x = "Household worth at 30 years old", y = "Average Income ($)", title = "Average Income vs. Household Worth at 30 (Group by Sex)")
 ```
 
 <font color="#800000">
@@ -845,7 +850,7 @@ The linear model for the average income after filtering the top coded incomes, s
 ```{r, warning = FALSE}
 Income_hh30.plot <- ggplot(data = nlsy.recode.inc.filt, aes(x = Income, y = HH_NET_WORTH_30 , colour = Sex )) 
 Income_hh30.plot + geom_point() + stat_smooth(method = 'lm', formula = y ~ x, size = 1) + theme(axis.text.x=element_text(angle = 0, vjust = 0.5)) + 
-  labs( x = "Average Income ($)", y = "Household worth at 30 years old")
+  labs( x = "Average Income ($)", y = "Household worth at 30 years old", title = "Average Income vs. Household Worth at 30 (Group by Sex)")
 ```
 
 <font color="#800000">
@@ -861,7 +866,7 @@ nlsy.recode <- filter(nlsy.recode, !is.na(ASSETS_DEBTS_30), !(Income > 150000))
 ```
 
 ```{r, warning = FALSE}
-ggplot(nlsy.recode, aes(x=ASSETS_DEBTS_30, y=Income, color=Sex)) + geom_point(size=0.2) + geom_smooth(method="loess", se=FALSE) + labs(x="Debt at the age of 30 (in $)", y="Income in $", title="Debt at 30 vs. Income (Seperated by Gender)")
+ggplot(nlsy.recode, aes(x=ASSETS_DEBTS_30, y=Income, color=Sex)) + geom_point(size=0.2) + geom_smooth(method="loess", se=FALSE) + labs(x="Debt at the age of 30 (in $)", y="Income in $", title="Debt at 30 vs. Income (Group by Gender)")
 ```
 
 <font color="#800000">
@@ -897,6 +902,7 @@ Below plot confirms the same. We've removed gender from the analysis and we see 
 ```{r, warning = FALSE}
 ggplot(nlsy.recode, aes(x=ASSETS_DEBTS_30, y=Income)) + geom_point(size=0.2) + geom_smooth(method="loess", se=FALSE) + labs(x="Debt at the age of 30 (in $)", y="Income in $", title="Debt at 30 vs. Income")
 ```
+
 <font color="#800000">
 We want to now plot all our variables against a final regression model. We've used eight variables in our analysis and regardless of whether they are significant or not we run the linear regression plots as a diagnostic tool.
 </font>
@@ -918,6 +924,6 @@ Residuals vs Leverage: This graph shows the presence of outliers in the dependen
 
 
 <font color="#800000">
-In conclusion, even though we took eight variables from our data-set and they all fit the linear model to some degree. The most significant impact on income gap was seen for the interactive variables between Sex and Industry Code as well as Sex and Marital status; specifically for married women and men. In our analysis, we also thought to shed some light on the impact of physical appearance using BMI on income gap. This also proved to be statistically significant. We expected a significant impact of the highest grade completed on the income gap but it proved to be insignificant across all levels of education. Furthermore, the number of biological children ought to have shown a clear direction with the gap widening as the number of children increased. This also proved to be insignificant. The scope of this project limited the factor selection; however, if a larger pool of factors is considered, we believe the regression model would have had better results.   
+<b>In conclusion, even though we took eight variables from our data-set and they all fit the linear model to some degree. The most significant impact on income gap was seen for the interactive variables between Sex and Industry Code as well as Sex and Marital status; specifically for married women and men. In our analysis, we also thought to shed some light on the impact of physical appearance using BMI on income gap. This also proved to be statistically significant. We expected a significant impact of the highest grade completed on the income gap but it proved to be insignificant across all levels of education. Furthermore, the number of biological children ought to have shown a clear direction with the gap widening as the number of children increased. This also proved to be insignificant. The scope of this project limited the factor selection; however, if a larger pool of factors is considered, we believe the regression model would have had better results.</b>
 </font>
 
